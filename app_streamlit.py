@@ -3,19 +3,18 @@ from datetime import datetime, date, time
 import openai
 import os
 
-st.set_page_config(page_title="전생과 사주팔자 알아보기", layout="centered")  # ← 반드시 가장 위에!
+# 1. 페이지 설정 (가장 위에!)
+st.set_page_config(page_title="전생과 사주팔자 알아보기", layout="centered")
 
-# 이하 코드 계속...
-
-# 1. OpenAI API 키를 환경변수에서 읽어옵니다 (Streamlit Cloud의 Secrets에 등록 필요)
+# 2. OpenAI API 키 (Streamlit Cloud의 Secrets에 OPENAI_API_KEY로 등록 필요)
 openai.api_key = os.environ.get("OPENAI_API_KEY")
 
-# 2. 전생 후보 데이터
+# 3. 전생 후보 데이터 (더 다양하게!)
 PAST_LIVES = {
     'animals': [
         '호랑이', '사자', '늑대', '여우', '고양이', '개', '독수리', '부엉이', '올빼미', '펭귄', '코끼리', '기린', '하마', '고래', '돌고래',
-        '상어', '거북이', '토끼', '다람쥐', '판다', '수달', '여우', '사슴', '양', '염소', '말', '황소', '돼지', '닭', '공작', '까치',
-        '앵무새', '참새', '비둘기', '매', '두루미', '백조', '고슴도치', '너구리', '스컹크', '두더지', '두꺼비', '개구리', '뱀', '이구아나',
+        '상어', '거북이', '토끼', '다람쥐', '판다', '수달', '사슴', '양', '염소', '말', '황소', '돼지', '닭', '공작', '까치', '앵무새',
+        '참새', '비둘기', '매', '두루미', '백조', '고슴도치', '너구리', '스컹크', '두더지', '두꺼비', '개구리', '뱀', '이구아나',
         '카멜레온', '악어', '문어', '오징어', '게', '가재', '해파리', '불가사리', '벌', '나비', '잠자리', '개미', '무당벌레', '풍뎅이'
     ],
     'jobs': [
@@ -31,7 +30,7 @@ PAST_LIVES = {
     ]
 }
 
-# 3. 사주팔자 계산 함수
+# 4. 사주팔자 계산 함수
 def calculate_saju(birth_date):
     year = birth_date.year
     month = birth_date.month
@@ -74,10 +73,11 @@ def calculate_saju(birth_date):
     saju['newyear_fortune'] = newyear_fortune_map.get(year_key, '올해는 다양한 변화가 예상됩니다!')
     return saju
 
-# 4. 전생 결정 함수
-def decide_past_life(saju):
-    keys = [saju['year'], saju['month'], saju['day'], saju['hour']]
-    total = sum([ord(k) for k in keys])
+# 5. 전생 결정 함수
+def decide_past_life(saju, gender):
+    # 성별도 반영해서 더 다양하게!
+    keys = [saju['year'], saju['month'], saju['day'], saju['hour'], gender]
+    total = sum([ord(str(k)) for k in keys])
     category = total % 3
     if category == 0:
         idx = total % len(PAST_LIVES['animals'])
@@ -89,28 +89,42 @@ def decide_past_life(saju):
         idx = total % len(PAST_LIVES['myth'])
         return PAST_LIVES['myth'][idx]
 
-# 5. AI 운세 해석 함수 (GPT-3.5/4 사용)
-def generate_long_fortune(saju):
+# 6. AI 운세 해석 함수 (GPT)
+def generate_long_fortune(saju, gender):
     prompt = f"""
     사주팔자 정보:
     년주: {saju['year']}, 월주: {saju['month']}, 일주: {saju['day']}, 시주: {saju['hour']}
+    성별: {gender}
     이 사람의 인생총운을 1000자 이상으로 아주 상세하게, 예시와 조언, 인생의 흐름, 성격, 인간관계, 재물, 건강, 직업, 사랑 등 다양한 측면을 포함해 설명해줘.
-    그리고 올해의 신년운세도 1000자 이상으로 아주 상세하게, 올해의 기회와 주의점, 월별 흐름, 조언, 예상되는 사건 등도 포함해서 설명해줘.
-    각각 [인생총운], [신년운세]로 구분해서 써줘.
+    그리고 올해의 신년운세도 1000자 이상으로 아주 상세하게, 올해의 기회와 주의점, 월별 흐름, 조언을 포함해 설명해줘.
     """
     try:
         response = openai.chat.completions.create(
-            model="gpt-3.5-turbo",  # 또는 gpt-4
+            model="gpt-3.5-turbo",  # 또는 "gpt-4" (유료)
             messages=[{"role": "user", "content": prompt}],
-            max_tokens=2048,
-            temperature=0.8
+            max_tokens=1200,
+            temperature=0.7
         )
-        content = response.choices[0].message.content
-        return content
+        return response.choices[0].message.content.strip()
     except Exception as e:
-        return f"AI 해석 중 오류가 발생했습니다: {e}"
+        return "AI 운세 해석을 불러오지 못했습니다."
 
-# 6. Streamlit UI
+# 7. 전생 그림 생성 함수 (DALL·E)
+def generate_past_life_image(past_life):
+    prompt = f"A {past_life} in Studio Ghibli style, plain background, highly detailed, cute, no background, focus on character"
+    try:
+        response = openai.images.generate(
+            model="dall-e-3",  # 또는 "dall-e-2"
+            prompt=prompt,
+            n=1,
+            size="512x512"
+        )
+        image_url = response.data[0].url
+        return image_url
+    except Exception as e:
+        return None
+
+# 8. Streamlit UI
 st.title("전생과 사주팔자 알아보기")
 
 birth_date = st.date_input("태어난 날짜를 입력하세요", min_value=date(1900,1,1), max_value=date.today())
@@ -119,17 +133,26 @@ calendar_type = st.radio("달력 종류", ("양력", "음력"))
 gender = st.radio("성별", ("남자", "여자"))
 
 if st.button("결과 보기"):
-    with st.spinner('분석중...'):
-        birth_datetime = datetime.combine(birth_date, birth_time)
+    # 날짜+시간 합치기
+    birth_datetime = datetime.combine(birth_date, birth_time)
+    with st.spinner("분석중..."):
         saju = calculate_saju(birth_datetime)
-        past_life = decide_past_life(saju)
-        long_fortune = generate_long_fortune(saju)
-    st.subheader("사주팔자")
-    st.write(f"년주: {saju['year']}")
-    st.write(f"월주: {saju['month']}")
-    st.write(f"일주: {saju['day']}")
-    st.write(f"시주: {saju['hour']}")
-    st.markdown(long_fortune)
+        past_life = decide_past_life(saju, gender)
+        long_fortune = generate_long_fortune(saju, gender)
+        image_url = generate_past_life_image(past_life)
+    st.subheader("사주팔자 해석")
+    st.write(f"**년주:** {saju['year']}  **월주:** {saju['month']}  **일주:** {saju['day']}  **시주:** {saju['hour']}")
+    st.write(f"**인생총운:** {saju['life_fortune']}")
+    st.write(f"**신년운세:** {saju['newyear_fortune']}")
+    st.markdown("---")
+    st.subheader("AI 운세 해석")
+    st.write(long_fortune)
+    st.markdown("---")
     st.subheader("당신의 전생")
-    st.write(f"당신의 전생은 {past_life}이었습니다!")
+    st.write(f"**전생:** {past_life}")
+    if image_url:
+        st.image(image_url, caption=f"{past_life}의 모습 (AI 그림)", use_column_width=True)
+    else:
+        st.info("전생 이미지를 불러오지 못했습니다.")
+
 
