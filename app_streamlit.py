@@ -3,6 +3,10 @@ from datetime import datetime, date, time
 import openai
 import os
 
+st.set_page_config(page_title="전생과 사주팔자 알아보기", layout="centered")  # ← 반드시 가장 위에!
+
+# 이하 코드 계속...
+
 # 1. OpenAI API 키를 환경변수에서 읽어옵니다 (Streamlit Cloud의 Secrets에 등록 필요)
 openai.api_key = os.environ.get("OPENAI_API_KEY")
 
