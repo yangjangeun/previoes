@@ -97,7 +97,6 @@ def generate_long_fortune(saju):
         return f"AI 해석 중 오류가 발생했습니다: {e}"
 
 # 6. Streamlit UI
-st.set_page_config(page_title="전생과 사주팔자 알아보기", layout="centered")
 st.title("전생과 사주팔자 알아보기")
 
 birth_date = st.date_input("태어난 날짜를 입력하세요", min_value=date(1900,1,1), max_value=date.today())
