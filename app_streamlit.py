@@ -75,9 +75,9 @@ def calculate_saju(birth_date):
 
 # 5. 전생 결정 함수
 def decide_past_life(saju, gender):
-    # 성별도 반영해서 더 다양하게!
     keys = [saju['year'], saju['month'], saju['day'], saju['hour'], gender]
-    total = sum([ord(str(k)) for k in keys])
+    # 각 key의 모든 글자에 대해 ord()를 적용
+    total = sum(ord(ch) for k in keys for ch in str(k))
     category = total % 3
     if category == 0:
         idx = total % len(PAST_LIVES['animals'])
