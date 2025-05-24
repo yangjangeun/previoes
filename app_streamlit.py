@@ -1,26 +1,19 @@
 import streamlit as st
 from datetime import datetime, date, time
-import time as t
+import openai
+import os
 
-st.title("전생과 사주팔자 알아보기")
-birth_date = st.date_input("태어난 날짜를 입력하세요", min_value=date(1900,1,1), max_value=date.today())
-birth_time = st.time_input("태어난 시간을 입력하세요", value=time(0,0))
-calendar_type = st.radio("달력 종류", ("양력", "음력"))
-gender = st.radio("성별", ("남자", "여자"))
+# 1. OpenAI API 키를 환경변수에서 읽어옵니다 (Streamlit Cloud의 Secrets에 등록 필요)
+openai.api_key = os.environ.get("OPENAI_API_KEY")
 
-if st.button("결과 보기"):
-    st.write(f"입력한 생년월일: {birth_date} {birth_time}")
-    st.write(f"달력 종류: {calendar_type}")
-    st.write(f"성별: {gender}")
-    st.success("여기에 사주팔자와 전생 결과가 나옵니다!")
-    
-# 전생 후보 데이터와 계산 함수들 복사
+# 2. 전생 후보 데이터
 PAST_LIVES = {
     'animals': ['호랑이', '사자', '독수리', '고래', '코끼리', '팬더', '늑대', '여우', '고양이', '돌고래', '토끼', '다람쥐', '부엉이', '거북이'],
     'jobs': ['왕', '장군', '무사', '승려', '화가', '음악가', '상인', '농부', '학자', '의사', '요리사', '무용가', '연금술사', '마법사'],
     'myth': ['용', '천사', '도깨비', '요정', '구미호', '유니콘', '드래곤', '피닉스']
 }
 
+# 3. 사주팔자 계산 함수
 def calculate_saju(birth_date):
     year = birth_date.year
     month = birth_date.month
@@ -63,6 +56,7 @@ def calculate_saju(birth_date):
     saju['newyear_fortune'] = newyear_fortune_map.get(year_key, '올해는 다양한 변화가 예상됩니다!')
     return saju
 
+# 4. 전생 결정 함수
 def decide_past_life(saju):
     keys = [saju['year'], saju['month'], saju['day'], saju['hour']]
     total = sum([ord(k) for k in keys])
@@ -77,39 +71,48 @@ def decide_past_life(saju):
         idx = total % len(PAST_LIVES['myth'])
         return PAST_LIVES['myth'][idx]
 
+# 5. AI 운세 해석 함수 (GPT-3.5/4 사용)
+def generate_long_fortune(saju):
+    prompt = f"""
+    사주팔자 정보:
+    년주: {saju['year']}, 월주: {saju['month']}, 일주: {saju['day']}, 시주: {saju['hour']}
+    이 사람의 인생총운을 1000자 이상으로 아주 상세하게, 예시와 조언, 인생의 흐름, 성격, 인간관계, 재물, 건강, 직업, 사랑 등 다양한 측면을 포함해 설명해줘.
+    그리고 올해의 신년운세도 1000자 이상으로 아주 상세하게, 올해의 기회와 주의점, 월별 흐름, 조언, 예상되는 사건 등도 포함해서 설명해줘.
+    각각 [인생총운], [신년운세]로 구분해서 써줘.
+    """
+    try:
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",  # gpt-4로 바꿔도 됨(키가 지원하면)
+            messages=[{"role": "user", "content": prompt}],
+            max_tokens=2048,
+            temperature=0.8
+        )
+        content = response.choices[0].message.content
+        return content
+    except Exception as e:
+        return f"AI 해석 중 오류가 발생했습니다: {e}"
+
+# 6. Streamlit UI
 st.set_page_config(page_title="전생과 사주팔자 알아보기", layout="centered")
 st.title("전생과 사주팔자 알아보기")
 
-# 1900년 1월 1일부터 오늘까지 선택 가능하게 명시
-birth_date = st.date_input(
-    "태어난 날짜를 입력하세요",
-    min_value=date(1900, 1, 1),
-    max_value=date.today()
-)
+birth_date = st.date_input("태어난 날짜를 입력하세요", min_value=date(1900,1,1), max_value=date.today())
 birth_time = st.time_input("태어난 시간을 입력하세요", value=time(0,0))
 calendar_type = st.radio("달력 종류", ("양력", "음력"))
 gender = st.radio("성별", ("남자", "여자"))
 
-# 분석중 메시지와 결과를 함께 처리
 if st.button("결과 보기"):
-    # 분석중 메시지 표시
     with st.spinner('분석중...'):
-        t.sleep(1)  # 실제 분석/계산이 들어갈 부분(여기선 1초 대기)
-    # 결과 출력
-    st.write(f"입력한 생년월일: {birth_date} {birth_time}")
-    st.write(f"달력 종류: {calendar_type}")
-    st.write(f"성별: {gender}")
-    # 입력값을 datetime으로 합치기
-    birth_datetime = datetime.combine(birth_date, birth_time)
-    saju = calculate_saju(birth_datetime)
-    past_life = decide_past_life(saju)
+        birth_datetime = datetime.combine(birth_date, birth_time)
+        saju = calculate_saju(birth_datetime)
+        past_life = decide_past_life(saju)
+        long_fortune = generate_long_fortune(saju)
     st.subheader("사주팔자")
     st.write(f"년주: {saju['year']}")
     st.write(f"월주: {saju['month']}")
     st.write(f"일주: {saju['day']}")
     st.write(f"시주: {saju['hour']}")
-    st.write(f"인생총운: {saju['life_fortune']}")
-    st.write(f"신년운세: {saju['newyear_fortune']}")
+    st.markdown(long_fortune)
     st.subheader("당신의 전생")
     st.write(f"당신의 전생은 {past_life}이었습니다!")
-    st.success("여기에 사주팔자와 전생 결과가 나옵니다!") 
+
