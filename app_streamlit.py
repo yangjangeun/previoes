@@ -95,8 +95,8 @@ def generate_long_fortune(saju, gender):
     사주팔자 정보:
     년주: {saju['year']}, 월주: {saju['month']}, 일주: {saju['day']}, 시주: {saju['hour']}
     성별: {gender}
-    이 사람의 인생총운을 1000자 이상으로 아주 상세하게, 예시와 조언, 인생의 흐름, 성격, 인간관계, 재물, 건강, 직업, 사랑 등 다양한 측면을 포함해 설명해줘.
-    그리고 올해의 신년운세도 1000자 이상으로 아주 상세하게, 올해의 기회와 주의점, 월별 흐름, 조언을 포함해 설명해줘.
+    이 사람의 인생총운을 1100자 내외로 아주 상세하게, 예시와 조언, 인생의 흐름, 성격, 인간관계, 재물, 건강, 직업, 사랑 등 다양한 측면을 포함해 설명해줘.
+    그리고 올해의 신년운세도 1100자 내외로 아주 상세하게, 금전운, 승진운, 올해의 기회와 주의점, 월별 흐름, 조언을 포함해 설명해줘.
     """
     try:
         response = openai.chat.completions.create(
@@ -151,7 +151,7 @@ if st.button("결과 보기"):
     st.subheader("당신의 전생")
     st.write(f"**전생:** {past_life}")
     if image_url:
-        st.image(image_url, caption=f"{past_life}의 모습 (AI 그림)", use_column_width=True)
+        st.image(image_url, caption=f"{past_life}의 모습 (AI 그림)", use_container_width=True)
     else:
         st.info("전생 이미지를 불러오지 못했습니다.")
 
