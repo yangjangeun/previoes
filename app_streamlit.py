@@ -2,6 +2,18 @@ import streamlit as st
 from datetime import datetime, date, time
 import time as t
 
+st.title("전생과 사주팔자 알아보기")
+birth_date = st.date_input("태어난 날짜를 입력하세요", min_value=date(1900,1,1), max_value=date.today())
+birth_time = st.time_input("태어난 시간을 입력하세요", value=time(0,0))
+calendar_type = st.radio("달력 종류", ("양력", "음력"))
+gender = st.radio("성별", ("남자", "여자"))
+
+if st.button("결과 보기"):
+    st.write(f"입력한 생년월일: {birth_date} {birth_time}")
+    st.write(f"달력 종류: {calendar_type}")
+    st.write(f"성별: {gender}")
+    st.success("여기에 사주팔자와 전생 결과가 나옵니다!")
+    
 # 전생 후보 데이터와 계산 함수들 복사
 PAST_LIVES = {
     'animals': ['호랑이', '사자', '독수리', '고래', '코끼리', '팬더', '늑대', '여우', '고양이', '돌고래', '토끼', '다람쥐', '부엉이', '거북이'],
