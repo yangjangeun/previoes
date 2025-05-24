@@ -151,7 +151,7 @@ if st.button("결과 보기"):
     st.subheader("당신의 전생")
     st.write(f"**전생:** {past_life}")
     if image_url:
-        st.image(image_url, caption=f"{past_life}의 모습 (AI 그림)", use_container_width=True)
+        st.image(image_url, caption=f"{past_life}의 모습", use_container_width=True)
     else:
         st.info("전생 이미지를 불러오지 못했습니다.")
 
