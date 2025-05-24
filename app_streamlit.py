@@ -114,7 +114,7 @@ def generate_past_life_image(past_life):
     prompt = f"A {past_life} in Studio Ghibli style, plain background, highly detailed, cute, no background, focus on character"
     try:
         response = openai.images.generate(
-            model="dall-e-3",  # 또는 "dall-e-2"
+            model="dall-e-2",  # 또는 "dall-e-2"
             prompt=prompt,
             n=1,
             size="512x512"
