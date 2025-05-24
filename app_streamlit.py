@@ -85,8 +85,8 @@ def generate_long_fortune(saju):
     각각 [인생총운], [신년운세]로 구분해서 써줘.
     """
     try:
-        response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",  # gpt-4로 바꿔도 됨(키가 지원하면)
+        response = openai.chat.completions.create(
+            model="gpt-3.5-turbo",  # 또는 gpt-4
             messages=[{"role": "user", "content": prompt}],
             max_tokens=2048,
             temperature=0.8
